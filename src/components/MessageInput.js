@@ -42,7 +42,7 @@ const MessageInput = ({
   }
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'row' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'row', padding: 2 }}>
       <TextField
         label="Type a message"
         value={message}

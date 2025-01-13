@@ -202,6 +202,7 @@ const ContactList = ({
                   marginBottom: 1,
                   padding: '8px 16px',
                   borderRadius: 2,
+                  cursor: 'pointer',
                   '&:hover': { backgroundColor: '#f1f1f1' },
                 }}
               >

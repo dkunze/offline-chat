@@ -233,7 +233,6 @@ const Chat = () => {
         <Box
           sx={{
             width: '70%',
-            padding: 2,
             display: 'flex',
             flexDirection: 'column',
           }}

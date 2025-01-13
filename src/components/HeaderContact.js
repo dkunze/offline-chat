@@ -10,7 +10,15 @@ const HeaderContact = ({
   handleDeleteChatHistory, // Function to handle deleting chat history
 }) => {
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: 2 }}>
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        marginBottom: 2,
+        backgroundColor: '#DDDDDD',
+        padding: '10px',
+      }}
+    >
       <Avatar sx={{ marginRight: 2 }} />
       <Typography variant="h6">{selectedContact}</Typography>
 
