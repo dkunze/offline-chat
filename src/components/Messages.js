@@ -39,50 +39,67 @@ const Messages = ({
       onScroll={handleScroll}
     >
       <List sx={{ width: '100%' }}>
-        {messages.map((msg, index) => (
-          <ListItem
-            key={index}
-            sx={{
-              display: 'flex',
-              justifyContent:
-                msg.userId === user?.uid ? 'flex-end' : 'flex-start',
-            }}
-          >
-            <Box
+        {messages.length ? (
+          messages.map((msg, index) => (
+            <ListItem
+              key={index}
               sx={{
-                padding: 1,
-                backgroundColor:
-                  msg.userId === user?.uid ? '#DCF8C6' : '#DDDDDD',
-                borderRadius: 2,
-                maxWidth: '70%',
-                marginBottom: 1,
+                display: 'flex',
+                justifyContent:
+                  msg.userId === user?.uid ? 'flex-end' : 'flex-start',
               }}
             >
-              <Typography variant="body1">{msg.text}</Typography>
-              <Typography variant="caption" sx={{ textAlign: 'right' }}>
-                {formatTimestamp(msg.timestamp)}
-              </Typography>
-              {/* Status icon */}
-              {msg.fromEmail === user.email && (
-                <>
-                  {msg.status === 'sending' && <AccessTimeIcon fontSize="10" />}
-                  {msg.status === 'sent' && (
-                    <CheckIcon
-                      fontSize="10"
-                      color={msg.isRead ? 'success' : 'default'}
-                    />
-                  )}
-                  {msg.isRead && (
-                    <>
-                      <CheckIcon fontSize="10" color="success" />{' '}
-                      {/* Double tick */}
-                    </>
-                  )}
-                </>
-              )}
-            </Box>
-          </ListItem>
-        ))}
+              <Box
+                sx={{
+                  padding: 1,
+                  backgroundColor:
+                    msg.userId === user?.uid ? '#DCF8C6' : '#DDDDDD',
+                  borderRadius: 2,
+                  maxWidth: '70%',
+                  marginBottom: 1,
+                }}
+              >
+                <Typography variant="body1">{msg.text}</Typography>
+                <Typography variant="caption" sx={{ textAlign: 'right' }}>
+                  {formatTimestamp(msg.timestamp)}
+                </Typography>
+                {/* Status icon */}
+                {msg.fromEmail === user.email && (
+                  <>
+                    {msg.status === 'sending' && (
+                      <AccessTimeIcon fontSize="10" />
+                    )}
+                    {msg.status === 'sent' && (
+                      <CheckIcon
+                        fontSize="10"
+                        color={msg.isRead ? 'success' : 'default'}
+                      />
+                    )}
+                    {msg.isRead && (
+                      <>
+                        <CheckIcon fontSize="10" color="success" />{' '}
+                        {/* Double tick */}
+                      </>
+                    )}
+                  </>
+                )}
+              </Box>
+            </ListItem>
+          ))
+        ) : (
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              flex: 1,
+              textAlign: 'center',
+              fontStyle: 'italic',
+            }}
+          >
+            <Typography variant="h6">Say Hi!</Typography>
+          </Box>
+        )}
       </List>
     </Box>
   )

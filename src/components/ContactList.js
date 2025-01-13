@@ -110,12 +110,13 @@ const ContactList = ({
   }
 
   const confirmDeleteChatHistory = async () => {
+    console.log(selectedContact, user.email)
     try {
       // Query messages for the selected contact
       const messagesQuery = query(
         collection(db, 'messages'),
         where('sendTo', '==', selectedContact),
-        where('fromEmail', '==', user.contactEmail)
+        where('fromEmail', '==', user.email)
       )
       const querySnapshot = await getDocs(messagesQuery)
 
@@ -204,6 +205,8 @@ const ContactList = ({
                   borderRadius: 2,
                   cursor: 'pointer',
                   '&:hover': { backgroundColor: '#f1f1f1' },
+                  backgroundColor:
+                    selectedContact === contact ? '#f1f1f1' : '#ffffff',
                 }}
               >
                 <Avatar sx={{ marginRight: 2 }} />

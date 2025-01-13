@@ -7,7 +7,7 @@ const HeaderContact = ({
   selectedContact,
   handleClickSettings,
   handleCloseChat,
-  handleDeleteChatHistory, // Function to handle deleting chat history
+  handleDeleteChatHistory,
 }) => {
   return (
     <Box
@@ -31,7 +31,7 @@ const HeaderContact = ({
       <IconButton
         onClick={handleDeleteChatHistory}
         sx={{ marginLeft: 1 }}
-        color="error" // Use red color for the delete icon to make it stand out
+        color="error"
       >
         <DeleteIcon />
       </IconButton>
