@@ -121,6 +121,15 @@ const Chat = () => {
   const handleSendMessage = async () => {
     if (message.trim() === '' || !selectedContact || !user) return // Ensure user is not null
 
+    // Check if there is an internet connection
+    if (isOffline) {
+      // Store message locally for later synchronization
+      storeMessageLocally(message)
+      // Mark message as 'sending via Bluetooth' and update UI
+      setMessage('')
+      return
+    }
+
     try {
       // Send the message and change its status to "sending"
       const newMessageRef = await addDoc(collection(db, 'messages'), {
@@ -134,7 +143,6 @@ const Chat = () => {
       })
 
       setMessage('')
-      // Auto-scroll to the bottom after sending the message
       messageListRef.current.scrollTop = messageListRef.current.scrollHeight
 
       // Update the status to "sent" after a short delay (simulating sending)
@@ -147,6 +155,19 @@ const Chat = () => {
       console.error('Error sending the message:', error)
       alert('Error sending the message. Please check your connection.')
     }
+  }
+
+  const storeMessageLocally = (messageText) => {
+    const savedMessages =
+      JSON.parse(localStorage.getItem('savedMessages')) || []
+    savedMessages.push({
+      text: messageText,
+      timestamp: new Date(),
+      status: 'sending via Bluetooth',
+      fromEmail: user.email,
+      sendTo: selectedContact,
+    })
+    localStorage.setItem('savedMessages', JSON.stringify(savedMessages))
   }
 
   const handleLogout = async () => {
@@ -204,6 +225,44 @@ const Chat = () => {
       await updateDoc(doc.ref, { isRead: true })
     })
   }
+
+  const sendMessageViaBluetooth = async (messageText) => {
+    try {
+      // Use Web Bluetooth API to send the message via Bluetooth
+      const device = await navigator.bluetooth.requestDevice({
+        filters: [{ services: ['battery_service'] }], // Customize this filter for Bluetooth communication
+      })
+
+      // Connect to the device and send the message
+      const server = await device.gatt.connect()
+      const service = await server.getPrimaryService('battery_service') // Change to the appropriate service
+      const characteristic = await service.getCharacteristic('battery_level') // Change to the appropriate characteristic
+
+      // Send the message (you will need to modify this based on Bluetooth service and characteristics)
+      await characteristic.writeValue(new TextEncoder().encode(messageText))
+      console.log('Message sent via Bluetooth: ', messageText)
+    } catch (error) {
+      console.error('Error sending message via Bluetooth:', error)
+    }
+  }
+
+  useEffect(() => {
+    if (!isOffline) {
+      // Sync saved messages when back online
+      const savedMessages =
+        JSON.parse(localStorage.getItem('savedMessages')) || []
+      savedMessages.forEach((savedMessage) => {
+        if (savedMessage.status === 'sending via Bluetooth') {
+          sendMessageViaBluetooth(savedMessage.text)
+        }
+        // Send the message via normal method (network)
+        handleSendMessage(savedMessage.text)
+      })
+
+      // Clear saved messages after successful send
+      localStorage.removeItem('savedMessages')
+    }
+  }, [isOffline])
 
   return (
     <Container maxWidth="lg">

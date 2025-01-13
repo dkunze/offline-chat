@@ -53,7 +53,11 @@ const Messages = ({
                 sx={{
                   padding: 1,
                   backgroundColor:
-                    msg.userId === user?.uid ? '#DCF8C6' : '#DDDDDD',
+                    msg.userId === user?.uid
+                      ? msg.status === 'sending via Bluetooth'
+                        ? '#90caf9' // Blue shade for Bluetooth messages
+                        : '#DCF8C6' // Green shade for regular messages
+                      : '#DDDDDD',
                   borderRadius: 2,
                   maxWidth: '70%',
                   marginBottom: 1,
@@ -74,6 +78,9 @@ const Messages = ({
                         fontSize="10"
                         color={msg.isRead ? 'success' : 'default'}
                       />
+                    )}
+                    {msg.status === 'sending via Bluetooth' && (
+                      <AccessTimeIcon fontSize="10" color="blue" />
                     )}
                     {msg.isRead && (
                       <>
