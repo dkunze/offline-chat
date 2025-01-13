@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Container, Box } from '@mui/material'
+import { Container, Box, Snackbar, Alert } from '@mui/material'
 import { auth, db } from '../firebaseConfig'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -10,6 +10,7 @@ import {
   onSnapshot,
   enableNetwork,
   updateDoc,
+  getDocs,
 } from 'firebase/firestore'
 import { signOut } from 'firebase/auth'
 import ContactList from './ContactList'
@@ -29,6 +30,10 @@ const Chat = () => {
   const [anchorEl, setAnchorEl] = useState(null)
   const [loadingContacts, setLoadingContacts] = useState(true)
   const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false) // State to control delete confirmation dialog visibility
+
+  // Snackbar state for unread messages notification
+  const [openSnackbar, setOpenSnackbar] = useState(false)
+  const [unreadMessageCount, setUnreadMessageCount] = useState(0)
 
   const navigate = useNavigate()
   const messageListRef = useRef(null)
@@ -72,7 +77,7 @@ const Chat = () => {
     if (user && selectedContact) {
       const messagesQuery = query(
         collection(db, 'messages'),
-        where('contactEmail', 'in', [user.email, selectedContact])
+        where('fromEmail', 'in', [user.email, selectedContact])
       )
       const unsubscribeMessages = onSnapshot(messagesQuery, (snapshot) => {
         const sortedMessages = snapshot.docs
@@ -87,6 +92,32 @@ const Chat = () => {
     }
   }, [user, selectedContact])
 
+  // Track unread messages
+  useEffect(() => {
+    if (user) {
+      const unreadMessagesQuery = query(
+        collection(db, 'messages'),
+        where('sendTo', '==', user.email),
+        where('isRead', '==', false)
+      )
+
+      const unsubscribeUnreadMessages = onSnapshot(
+        unreadMessagesQuery,
+        (snapshot) => {
+          const unreadMessagesCount = snapshot.size
+          setUnreadMessageCount(unreadMessagesCount)
+
+          // Trigger Snackbar when new unread messages arrive
+          if (unreadMessagesCount > 0) {
+            setOpenSnackbar(true)
+          }
+        }
+      )
+
+      return () => unsubscribeUnreadMessages()
+    }
+  }, [user])
+
   const handleSendMessage = async () => {
     if (message.trim() === '' || !selectedContact || !user) return // Ensure user is not null
 
@@ -95,9 +126,11 @@ const Chat = () => {
       const newMessageRef = await addDoc(collection(db, 'messages'), {
         text: message,
         userId: user.uid, // The authenticated user's ID
-        contactEmail: selectedContact, // The selected contact's email
+        sendTo: selectedContact, // The selected contact's email
+        fromEmail: user.email, // The selected contact's email
         timestamp: new Date(),
         status: 'sending', // Initial status as "sending"
+        isRead: false,
       })
 
       setMessage('')
@@ -128,6 +161,7 @@ const Chat = () => {
   }
 
   const selectContact = (email) => {
+    if (selectedContact === email) return
     setSelectedContact(email)
     setMessages([]) // Clear previous messages
   }
@@ -148,10 +182,27 @@ const Chat = () => {
     setMessages([]) // Clear messages when closing the chat
   }
 
-  // Handle delete chat history
   const handleDeleteChatHistory = async () => {
     // Confirmation before deletion
     setOpenDeleteConfirm(true)
+  }
+
+  // Function to close Snackbar
+  const handleCloseSnackbar = () => {
+    setOpenSnackbar(false)
+  }
+
+  const markMessagesAsRead = async () => {
+    const unreadMessagesQuery = query(
+      collection(db, 'messages'),
+      where('fromEmail', '==', selectedContact),
+      where('sendTo', '==', user.email),
+      where('isRead', '==', false)
+    )
+    const querySnapshot = await getDocs(unreadMessagesQuery)
+    querySnapshot.forEach(async (doc) => {
+      await updateDoc(doc.ref, { isRead: true })
+    })
   }
 
   return (
@@ -203,6 +254,7 @@ const Chat = () => {
                 messages={messages}
                 user={user}
                 formatTimestamp={formatTimestamp}
+                markMessagesAsRead={markMessagesAsRead}
               />
 
               {/* Message input */}
@@ -210,6 +262,7 @@ const Chat = () => {
                 message={message}
                 setMessage={setMessage}
                 handleSendMessage={handleSendMessage}
+                markMessagesAsRead={markMessagesAsRead}
               />
             </>
           ) : (
@@ -225,6 +278,26 @@ const Chat = () => {
           />
         </Box>
       </Box>
+
+      {/* Snackbar for unread messages notification */}
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'center',
+        }}
+        sx={{ width: '50%' }} // Make Snackbar take 50% of the screen width
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity="info"
+          sx={{ width: '100%' }}
+        >
+          You have {unreadMessageCount} unread messages!
+        </Alert>
+      </Snackbar>
     </Container>
   )
 }

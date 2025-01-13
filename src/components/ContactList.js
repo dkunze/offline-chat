@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { db } from '../firebaseConfig'
 import {
   List,
@@ -24,6 +24,7 @@ import {
   query,
   where,
   deleteDoc,
+  onSnapshot,
   getDocs,
 } from 'firebase/firestore'
 
@@ -43,6 +44,7 @@ const ContactList = ({
   const [newContactEmail, setNewContactEmail] = useState('') // State for new contact email
   const [errorMessage, setErrorMessage] = useState('') // State for error message
   const [openSnackbar, setOpenSnackbar] = useState(false) // State to control Snackbar visibility
+  const [unreadCounts, setUnreadCounts] = useState({}) // Store unread message counts for each contact
 
   const handleClickOpen = () => {
     setOpen(true)
@@ -112,7 +114,8 @@ const ContactList = ({
       // Query messages for the selected contact
       const messagesQuery = query(
         collection(db, 'messages'),
-        where('contactEmail', '==', selectedContact)
+        where('sendTo', '==', selectedContact),
+        where('fromEmail', '==', user.contactEmail)
       )
       const querySnapshot = await getDocs(messagesQuery)
 
@@ -134,6 +137,32 @@ const ContactList = ({
       setOpenSnackbar(true)
     }
   }
+
+  useEffect(() => {
+    const fetchUnreadCounts = async () => {
+      const counts = {}
+      for (let contact of contacts) {
+        const messagesQuery = query(
+          collection(db, 'messages'),
+          where('sendTo', '==', user.email), // Check messages for each contact
+          where('fromEmail', '==', contact), // Check messages for each contact
+          where('isRead', '==', false) // Only count unread messages
+        )
+
+        const unsubscribeMessages = onSnapshot(messagesQuery, (snapshot) => {
+          counts[contact] = snapshot.size // Store count for each contact
+          setUnreadCounts({ ...counts }) // Update the unread count state for each contact
+        })
+
+        // Cleanup function for unsubscribe when the component unmounts
+        return () => unsubscribeMessages()
+      }
+    }
+
+    if (contacts.length) {
+      fetchUnreadCounts()
+    }
+  }, [contacts, user])
 
   return (
     <Box
@@ -161,24 +190,35 @@ const ContactList = ({
             overflowY: 'auto',
           }}
         >
-          {contacts.map((contact, index) => (
-            <ListItem
-              button
-              key={index}
-              onClick={() => selectContact(contact)}
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                marginBottom: 1,
-                padding: '8px 16px',
-                borderRadius: 2,
-                '&:hover': { backgroundColor: '#f1f1f1' },
-              }}
-            >
-              <Avatar sx={{ marginRight: 2 }} />
-              <Typography variant="body1">{contact}</Typography>
-            </ListItem>
-          ))}
+          {contacts.map((contact, index) => {
+            return (
+              <ListItem
+                button
+                key={index}
+                onClick={() => selectContact(contact)}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  marginBottom: 1,
+                  padding: '8px 16px',
+                  borderRadius: 2,
+                  '&:hover': { backgroundColor: '#f1f1f1' },
+                }}
+              >
+                <Avatar sx={{ marginRight: 2 }} />
+                <Typography variant="body1">{contact}</Typography>
+                {/* Display unread message count */}
+                {unreadCounts[contact] > 0 && (
+                  <Typography
+                    variant="body2"
+                    sx={{ color: 'red', marginLeft: 1 }}
+                  >
+                    ({unreadCounts[contact]})
+                  </Typography>
+                )}
+              </ListItem>
+            )
+          })}
         </List>
       )}
 
