@@ -89,9 +89,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Material UI** for design components.
 - **React** for the frontend framework.
 - **emoji-mart** for adding emoji picker functionality.
-```
-
-### Instructions:
-1. **Copy the content**: Select and copy the entire content above.
-2. **Paste into your `README.md`**: Open your existing `README.md` file in your project directory (or create a new one), and paste the content into the file.
-3. **Save the file**: Once pasted, save your `README.md` file.
