@@ -1,4 +1,3 @@
-```markdown
 # Offline Chat with Bluetooth
 
 ## Overview
